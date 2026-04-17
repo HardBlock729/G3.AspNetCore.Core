@@ -1,7 +1,9 @@
 using System;
 using G3.AspNetCore.Core.Configuration;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace G3.AspNetCore.Core.Extensions;
 

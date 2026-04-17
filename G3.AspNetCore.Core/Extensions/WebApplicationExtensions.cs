@@ -1,6 +1,7 @@
 using G3.AspNetCore.Core.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Hosting;
 
 namespace G3.AspNetCore.Core.Extensions;
 
@@ -28,7 +29,11 @@ public static class WebApplicationExtensions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             };
+#if NET10_0_OR_GREATER
             forwardedOptions.KnownIPNetworks.Clear();
+#else
+            forwardedOptions.KnownNetworks.Clear();
+#endif
             forwardedOptions.KnownProxies.Clear();
             app.UseForwardedHeaders(forwardedOptions);
         }
