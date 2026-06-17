@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using System.Text.Json;
 
 namespace G3.AspNetCore.Core.Extensions;
 
@@ -13,23 +14,31 @@ namespace G3.AspNetCore.Core.Extensions;
 public static class LoggingExtensions
 {
     /// <summary>
-    /// Configures logging with a rate-limited console provider and suppresses high-volume
-    /// framework log categories. Minimizes log volume in production to reduce costs on
-    /// paid logging services (e.g. CloudWatch).
+    /// Configures logging with a rate-limited JSON console provider and suppresses high-volume
+    /// framework log categories. Outputs structured JSON per log line so CloudWatch Logs Insights
+    /// can correlate requests by RequestId, TenantId, and other scope properties.
     /// </summary>
     public static WebApplicationBuilder AddG3Logging(this WebApplicationBuilder builder)
     {
+        // Register JSON formatter and configure options (AddJsonConsole also adds a provider,
+        // which we remove below so we can wrap it in the rate limiter).
+        builder.Logging.AddJsonConsole(options =>
+        {
+            options.IncludeScopes = true;
+            options.JsonWriterOptions = new JsonWriterOptions { Indented = false };
+        });
+
+        // Remove the provider AddJsonConsole registered; keep the formatter + options.
         builder.Logging.ClearProviders();
 
+        // Re-add as a rate-limited wrapper around ConsoleLoggerProvider.
         builder.Logging.Services.AddSingleton<ILoggerProvider>(sp =>
         {
             var consoleProvider = new ConsoleLoggerProvider(
-                sp.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<ConsoleLoggerOptions>>());
+                sp.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<ConsoleLoggerOptions>>(),
+                sp.GetServices<ConsoleFormatter>());
             return new RateLimitedLoggerProvider(consoleProvider);
         });
-
-        builder.Services.Configure<SimpleConsoleFormatterOptions>(options =>
-            options.IncludeScopes = true);
 
         builder.Logging.SetMinimumLevel(
             builder.Environment.IsProduction()
