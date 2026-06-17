@@ -17,7 +17,7 @@ public static class OpenTelemetryExtensions
 {
     /// <summary>
     /// Adds OpenTelemetry tracing and metrics with ASP.NET Core and HTTP client instrumentation.
-    /// Exports to console in Development; exports to OTLP when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+    /// Exports to OTLP when OTEL_EXPORTER_OTLP_ENDPOINT is set; falls back to console in Development only.
     /// Health check endpoints are excluded from traces to reduce noise.
     /// </summary>
     public static WebApplicationBuilder AddG3OpenTelemetry(
@@ -46,11 +46,10 @@ public static class OpenTelemetryExtensions
                     })
                     .AddHttpClientInstrumentation(options => options.RecordException = true);
 
-                if (builder.Environment.IsDevelopment())
-                    tracing.AddConsoleExporter();
-
                 if (!string.IsNullOrEmpty(otlpEndpoint))
                     tracing.AddOtlpExporter();
+                else if (builder.Environment.IsDevelopment())
+                    tracing.AddConsoleExporter();
             })
             .WithMetrics(metrics =>
             {
@@ -60,11 +59,10 @@ public static class OpenTelemetryExtensions
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();
 
-                if (builder.Environment.IsDevelopment())
-                    metrics.AddConsoleExporter();
-
                 if (!string.IsNullOrEmpty(otlpEndpoint))
                     metrics.AddOtlpExporter();
+                else if (builder.Environment.IsDevelopment())
+                    metrics.AddConsoleExporter();
             });
 
         return builder;
