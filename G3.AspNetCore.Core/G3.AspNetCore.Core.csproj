@@ -6,7 +6,7 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <PackageId>G3Software.Net.AspNetCore.Core</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>G3Software</Authors>
     <Company>G3Software</Company>
     <Title>Core ASP.NET Core helpers</Title>
